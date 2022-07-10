@@ -66,6 +66,12 @@ describe("POST /companies", function () {
 /************************************** GET /companies */
 
 describe("GET /companies", function () {
+  let filters = {
+    nameLike: "c1", 
+    minEmployees: 1,  
+    maxEmployees: 10
+  }
+
   test("ok for anon", async function () {
     const resp = await request(app).get("/companies");
     expect(resp.body).toEqual({
@@ -94,6 +100,78 @@ describe("GET /companies", function () {
             },
           ],
     });
+  });
+
+  // Test for filter companies results with all filters received
+  test("ok: filter companies results with all filters received", async function () {
+    const resp = await request(app).get("/companies").send({ filters });
+    expect(resp.body).toEqual({
+      companies:
+          [
+            {
+              handle: "c1",
+              name: "C1",
+              description: "Desc1",
+              numEmployees: 1,
+              logoUrl: "http://c1.img",
+            },
+          ],
+    });
+  });
+
+  // Test for filter companies results with one filter received
+  test("ok: filter companies results with one filter received", async function () {
+    const resp = await request(app).get("/companies").send({ 
+      filters: { 
+        minEmployees: 2 
+      } 
+    });
+    expect(resp.body).toEqual({
+      companies:
+          [
+            {
+              handle: "c2",
+              name: "C2",
+              description: "Desc2",
+              numEmployees: 2,
+              logoUrl: "http://c2.img",
+            },
+            {
+              handle: "c3",
+              name: "C3",
+              description: "Desc3",
+              numEmployees: 3,
+              logoUrl: "http://c3.img",
+            },
+          ],
+    });
+  });
+
+  // Test bad request error for contain inappropriate filtering fields
+  test("fails: contain inappropriate filtering fields", async function () {
+    const resp = await request(app).get(`/companies`).send({ 
+      filters: { 
+        description: "bad request" 
+      } 
+    });
+    expect(resp.statusCode).toEqual(400);
+  });
+
+  // Test bad request error for 'minEmployees' greater than 'maxEmployees'
+  test("fails: 'minEmployees' greater than 'maxEmployees'", async function () {
+    const resp = await request(app).get(`/companies`).send({ 
+      filters: { 
+        minEmployees: 20,
+        maxEmployees: 2 
+      } 
+    });
+    expect(resp.statusCode).toEqual(400);
+  });
+
+  // Test bad request error for no data received
+  test("fails: no data received", async function () {
+    const resp = await request(app).get(`/companies`).send({ filters: { } });
+    expect(resp.statusCode).toEqual(400);
   });
 
   test("fails: test next() handler", async function () {

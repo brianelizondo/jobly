@@ -31,4 +31,64 @@ function sqlForPartialUpdate(dataToUpdate, jsToSql) {
   };
 }
 
-module.exports = { sqlForPartialUpdate };
+
+/**
+* Function to filter the results of the companies
+*   { name, minEmployees, maxEmployees }
+*   can receive at least 1 or all filters
+*/
+function findCompanyFilterSQL(companiesFilters){
+  let filterSQL = [];
+  let idx = 0;
+  let { nameLike, minEmployees, maxEmployees } = companiesFilters;
+
+  // If it does not receive any filter it shows an error
+  if(!nameLike && !minEmployees && !maxEmployees){
+    throw new BadRequestError("You must indicate at least one filter");
+  }
+
+  // Check that the received filters are allowed fields to filter the results
+  const allowKeys = ["nameLike", "minEmployees", "maxEmployees"];
+  for(let key of Object.keys(companiesFilters)){
+    if(!allowKeys.includes(key)) throw new BadRequestError(`'${key}' is not allowed for filtering`);
+  }
+
+  // Verify that the value of 'minEmployees' is less than that 'maxEmployees' otherwise it shows an error
+  if(minEmployees && maxEmployees){
+    if (minEmployees >= maxEmployees) throw new BadRequestError("The 'minEmployees' must be less than 'maxEmployees'");
+  }
+  
+  // If filter 'name' is received, SQL for filtering is added to the 'filterSQL' array
+  if(nameLike){
+    idx++;
+    companiesFilters.nameLike = `%${ companiesFilters.nameLike }%`;
+    filterSQL.push(`name ILIKE $${idx}`);
+  }
+  // If filter 'minEmployees' is received, SQL for filtering is added to the 'filterSQL' array
+  if(minEmployees){
+    idx++;
+    filterSQL.push(`num_employees >= $${idx}`);
+  }
+  // If filter 'maxEmployees' is received, SQL for filtering is added to the 'filterSQL' array
+  if(maxEmployees){
+    idx++;
+    filterSQL.push(`num_employees <= $${idx}`);
+  }
+
+  /**
+  *   Returns an object with the final SQL for filtering the results
+  *     whereCols: includes the columns that will be filtered and the variable that will be used by pg
+  *     values: includes the values for each columns
+  *     Example:
+  *       {
+  *         whereCols: 'WHERE name ILIKE $1 AND num_employees >= $2 AND num_employees <= $3',
+  *         values: ['find name', 100, 500]
+  *       }
+  */
+  return {
+    whereCols: `WHERE ${filterSQL.join(" AND ")}`,
+    values: Object.values(companiesFilters)
+  };
+}
+
+module.exports = { sqlForPartialUpdate, findCompanyFilterSQL };
