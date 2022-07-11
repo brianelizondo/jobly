@@ -63,7 +63,7 @@ describe("ensureLoggedIn", function () {
     const req = {};
     const res = { locals: { user: { username: "test", is_admin: false } } };
     const next = function (err) {
-      expect(err).toBeFalsy();
+      expect(err instanceof UnauthorizedError).toBeTruthy();
     };
     ensureLoggedIn(req, res, next);
   });
