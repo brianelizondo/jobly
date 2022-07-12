@@ -158,7 +158,7 @@ describe("GET /companies", function () {
 
   // Test bad request error for contain inappropriate filtering fields
   test("fails: contain inappropriate filtering fields", async function () {
-    const resp = await request(app).get(`/companies`).send({ 
+    const resp = await request(app).get("/companies").send({ 
       filters: { 
         description: "bad request" 
       } 
@@ -168,7 +168,7 @@ describe("GET /companies", function () {
 
   // Test bad request error for 'minEmployees' greater than 'maxEmployees'
   test("fails: 'minEmployees' greater than 'maxEmployees'", async function () {
-    const resp = await request(app).get(`/companies`).send({ 
+    const resp = await request(app).get("/companies").send({ 
       filters: { 
         minEmployees: 20,
         maxEmployees: 2 
@@ -179,7 +179,7 @@ describe("GET /companies", function () {
 
   // Test bad request error for no data received
   test("fails: no data received", async function () {
-    const resp = await request(app).get(`/companies`).send({ filters: { } });
+    const resp = await request(app).get("/companies").send({ filters: { } });
     expect(resp.statusCode).toEqual(400);
   });
 
@@ -199,7 +199,7 @@ describe("GET /companies", function () {
 
 describe("GET /companies/:handle", function () {
   test("works for anon", async function () {
-    const resp = await request(app).get(`/companies/c1`);
+    const resp = await request(app).get("/companies/c1");
     expect(resp.body).toEqual({
       company: {
         handle: "c1",
@@ -212,7 +212,7 @@ describe("GET /companies/:handle", function () {
   });
 
   test("works for anon: company w/o jobs", async function () {
-    const resp = await request(app).get(`/companies/c2`);
+    const resp = await request(app).get("/companies/c2");
     expect(resp.body).toEqual({
       company: {
         handle: "c2",
@@ -225,7 +225,7 @@ describe("GET /companies/:handle", function () {
   });
 
   test("not found for no such company", async function () {
-    const resp = await request(app).get(`/companies/nope`);
+    const resp = await request(app).get("/companies/nope");
     expect(resp.statusCode).toEqual(404);
   });
 });
@@ -235,7 +235,7 @@ describe("GET /companies/:handle", function () {
 describe("PATCH /companies/:handle", function () {
   test("works for users", async function () {
     const resp = await request(app)
-        .patch(`/companies/c1`)
+        .patch("/companies/c1")
         .send({
           name: "C1-new",
         })
@@ -263,7 +263,7 @@ describe("PATCH /companies/:handle", function () {
 
   test("unauth for anon", async function () {
     const resp = await request(app)
-        .patch(`/companies/c1`)
+        .patch("/companies/c1")
         .send({
           name: "C1-new",
         });
@@ -272,7 +272,7 @@ describe("PATCH /companies/:handle", function () {
 
   test("not found on no such company", async function () {
     const resp = await request(app)
-        .patch(`/companies/nope`)
+        .patch("/companies/nope")
         .send({
           name: "new nope",
         })
@@ -282,7 +282,7 @@ describe("PATCH /companies/:handle", function () {
 
   test("bad request on handle change attempt", async function () {
     const resp = await request(app)
-        .patch(`/companies/c1`)
+        .patch("/companies/c1")
         .send({
           handle: "c1-new",
         })
@@ -292,7 +292,7 @@ describe("PATCH /companies/:handle", function () {
 
   test("bad request on invalid data", async function () {
     const resp = await request(app)
-        .patch(`/companies/c1`)
+        .patch("/companies/c1")
         .send({
           logoUrl: "not-a-url",
         })
@@ -306,27 +306,27 @@ describe("PATCH /companies/:handle", function () {
 describe("DELETE /companies/:handle", function () {
   test("works for users", async function () {
     const resp = await request(app)
-        .delete(`/companies/c1`)
+        .delete("/companies/c1")
         .set("authorization", `Bearer ${uAdminToken}`);
     expect(resp.body).toEqual({ deleted: "c1" });
   });
 
   test("bad request for regular users", async function () {
     const resp = await request(app)
-        .patch("/companies/c1")
+        .delete("/companies/c1")
         .set("authorization", `Bearer ${u1Token}`);
     expect(resp.statusCode).toEqual(401);
   });
 
   test("unauth for anon", async function () {
     const resp = await request(app)
-        .delete(`/companies/c1`);
+        .delete("/companies/c1");
     expect(resp.statusCode).toEqual(401);
   });
 
   test("not found for no such company", async function () {
     const resp = await request(app)
-        .delete(`/companies/nope`)
+        .delete("/companies/nope")
         .set("authorization", `Bearer ${uAdminToken}`);
     expect(resp.statusCode).toEqual(404);
   });
