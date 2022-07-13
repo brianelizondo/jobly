@@ -82,6 +82,12 @@ describe("POST /jobs", function () {
 
 /************************************** GET /jobs */
 describe("GET /jobs", function () {
+  let filters = {
+    titleLike: "j", 
+    minSalary: 1000,  
+    hasEquity: true
+  }
+
   test("ok for anon", async function () {
     const resp = await request(app).get("/jobs");
     expect(resp.body).toEqual({
@@ -105,12 +111,107 @@ describe("GET /jobs", function () {
               id: expect.any(Number),
               title: "j3",
               salary: 3000,
-              equity: "1",
+              equity: "0",
               companyHandle: "c3",
             },
           ],
     });
     jobTestValid = resp.body.jobs[0];
+  });
+
+  // Test for filter jobs results with all filters received
+  test("ok: filter jobs results with all filters received", async function () {
+    const resp = await request(app).get("/jobs").send({ filters });
+    expect(resp.body).toEqual({
+      jobs:
+        [
+          {
+            id: expect.any(Number),
+            title: "j1",
+            salary: 1000,
+            equity: "1",
+            companyHandle: "c1",
+          },
+          {
+            id: expect.any(Number),
+            title: "j2",
+            salary: 2000,
+            equity: "1",
+            companyHandle: "c2",
+          },
+        ],
+    });
+  });
+
+  // Test for filter jobs results with one filter received
+  test("ok: filter jobs results with one filter received", async function () {
+    const resp = await request(app).get("/jobs").send({ 
+      filters: { 
+        minSalary: 2000 
+      } 
+    });
+    expect(resp.body).toEqual({
+      jobs:
+          [
+            {
+              id: expect.any(Number),
+              title: "j2",
+              salary: 2000,
+              equity: "1",
+              companyHandle: "c2",
+            },
+            {
+              id: expect.any(Number),
+              title: "j3",
+              salary: 3000,
+              equity: "0",
+              companyHandle: "c3",
+            },
+          ],
+    });
+  });
+
+  // Test bad request error for contain inappropriate filtering fields
+  test("fails: contain inappropriate filtering fields", async function () {
+    const resp = await request(app).get("/jobs").send({ 
+      filters: { 
+        id: 1 
+      } 
+    });
+    expect(resp.statusCode).toEqual(400);
+  });
+
+  // Test bad request error for 'minSalary' greater than '0'
+  test("fails: 'minSalary' greater than '0'", async function () {
+    const resp = await request(app).get("/jobs").send({ 
+      filters: { 
+        minSalary: -20
+      } 
+    });
+    expect(resp.statusCode).toEqual(400);
+  });
+
+  // Test bad request error for 'hasEquity' different to 'true' or 'false'
+  test("fails: 'hasEquity' different to 'true' or 'false'", async function () {
+    const resp = await request(app).get("/jobs").send({ 
+      filters: { 
+        hasEquity: 1
+      } 
+    });
+    expect(resp.statusCode).toEqual(400);
+
+    const resp2 = await request(app).get("/jobs").send({ 
+      filters: { 
+        hasEquity: "notTrue"
+      } 
+    });
+    expect(resp2.statusCode).toEqual(400);
+  });
+
+  // Test bad request error for no data received
+  test("fails: no data received", async function () {
+    const resp = await request(app).get("/jobs").send({ filters: { } });
+    expect(resp.statusCode).toEqual(400);
   });
 });
 

@@ -42,12 +42,17 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
 /** GET /  =>
  *   { jobs: [ { id, title, salary, equity, companyHandle }, ...] }
  *
+ *  Can filter on provided search filters:
+ *    - titleLike (will find case-insensitive, partial matches)
+ *    - minSalary
+ *    - hasEquity 
+ * 
  * Authorization required: none
  */
 
 router.get("/", async function (req, res, next) {
   try {
-    const jobs = await Job.findAll();
+    const jobs = await Job.findAll(req.body.filters);
     return res.json({ jobs });
   } catch (err) {
     return next(err);

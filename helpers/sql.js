@@ -91,4 +91,77 @@ function findCompanyFilterSQL(companiesFilters){
   };
 }
 
-module.exports = { sqlForPartialUpdate, findCompanyFilterSQL };
+/**
+* Function to filter the results of the jobs (same like a 'findCompanyFilterSQL' function)
+*   { titleLike, minSalary, hasEquity }
+*   can receive at least 1 or all filters
+*/
+function findJobsFilterSQL(jobsFilters){
+  let filterSQL = [];
+  let idx = 0;
+  
+  // Check if filter 'hasEquity' is received
+  if(jobsFilters.hasOwnProperty('hasEquity')){
+    // Check if the values is "true" or "false", if not shows an error
+    if(jobsFilters.hasEquity !== true && jobsFilters.hasEquity !== false){
+      throw new BadRequestError("The 'hasEquity' must be 'true' or 'false'");
+    }else{
+      // if value is "true" update value to "0" else delete the property of the object to no create a filter for this
+      if(jobsFilters.hasEquity == true){
+        jobsFilters.hasEquity = 0;
+      }else{
+        delete jobsFilters.hasEquity;
+      }
+    }
+  }
+  let { titleLike, minSalary, hasEquity } = jobsFilters;
+
+  // If it does not receive any filter it shows an error
+  if(!titleLike && !minSalary && !hasEquity){
+    throw new BadRequestError("You must indicate at least one filter");
+  }
+
+  // Check that the received filters are allowed fields to filter the results
+  const allowKeys = ["titleLike", "minSalary", "hasEquity"];
+  for(let key of Object.keys(jobsFilters)){
+    if(!allowKeys.includes(key)) throw new BadRequestError(`'${key}' is not allowed for filtering`);
+  }
+
+  // If filter 'title' is received, SQL for filtering is added to the 'filterSQL' array
+  if(titleLike){
+    idx++;
+    jobsFilters.titleLike = `%${ jobsFilters.titleLike }%`;
+    filterSQL.push(`title ILIKE $${idx}`);
+  }
+  // If filter 'minSalary' is received, SQL for filtering is added to the 'filterSQL' array
+  if(minSalary){
+    if(minSalary < 0){
+      throw new BadRequestError("The 'minSalary' must be greater than '0'");
+    }
+
+    idx++;
+    filterSQL.push(`salary >= $${idx}`);
+  }
+  // If filter 'hasEquity' is received, SQL for filtering is added to the 'filterSQL' array
+  if(hasEquity == 0){
+    idx++;
+    filterSQL.push(`equity != $${idx}`);
+  }
+
+  /**
+  *   Returns an object with the final SQL for filtering the results
+  *     whereCols: includes the columns that will be filtered and the variable that will be used by pg
+  *     values: includes the values for each columns
+  *     Example:
+  *       {
+  *         whereCols: 'WHERE title ILIKE $1 AND salary >= $2 AND equity != $3',
+  *         values: ['find title', 100000, 0]
+  *       }
+  */
+  return {
+    whereCols: `WHERE ${filterSQL.join(" AND ")}`,
+    values: Object.values(jobsFilters)
+  };
+}
+
+module.exports = { sqlForPartialUpdate, findCompanyFilterSQL, findJobsFilterSQL };
