@@ -21,7 +21,7 @@ describe("create new job", function () {
     title: "new",
     salary: 50000,
     equity: "1",
-    companyHandle: "c1"
+    companyHandle: "c3"
   };
 
   test("works", async function () {
@@ -43,14 +43,14 @@ describe("findAll jobs", function () {
         title: "j1",
         salary: 1000,
         equity: "1",
-        companyHandle: "c1"
+        companyHandle: "c3"
       },
       {
         id: expect.any(Number),
         title: "j2",
         salary: 2000,
         equity: "1",
-        companyHandle: "c2"
+        companyHandle: "c3"
       },
       {
         id: expect.any(Number),

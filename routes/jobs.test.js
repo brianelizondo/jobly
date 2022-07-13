@@ -26,9 +26,9 @@ let jobTestValid;
 describe("POST /jobs", function () {
   const newJob = {
     title: "new",
-    salary: 1000,
+    salary: 0,
     equity: 1,
-    companyHandle: "c1",
+    companyHandle: "c3",
   };
 
   test("ok for admin users", async function () {
@@ -41,9 +41,9 @@ describe("POST /jobs", function () {
       job: {
         id: expect.any(Number),
         title: "new",
-        salary: 1000,
+        salary: 0,
         equity: "1",
-        companyHandle: "c1",
+        companyHandle: "c3"
       }
     });
   });
@@ -60,9 +60,9 @@ describe("POST /jobs", function () {
     const resp = await request(app)
         .post("/jobs")
         .send({
-            salary: 1000,
+            salary: 0,
             equity: 1,
-            companyHandle: "c1",
+            companyHandle: "c3",
         })
         .set("authorization", `Bearer ${uAdminToken}`);
     expect(resp.statusCode).toEqual(400);
@@ -98,14 +98,14 @@ describe("GET /jobs", function () {
               title: "j1",
               salary: 1000,
               equity: "1",
-              companyHandle: "c1",
+              companyHandle: "c3",
             },
             {
               id: expect.any(Number),
               title: "j2",
               salary: 2000,
               equity: "1",
-              companyHandle: "c2",
+              companyHandle: "c3",
             },
             {
               id: expect.any(Number),
@@ -130,14 +130,14 @@ describe("GET /jobs", function () {
             title: "j1",
             salary: 1000,
             equity: "1",
-            companyHandle: "c1",
+            companyHandle: "c3",
           },
           {
             id: expect.any(Number),
             title: "j2",
             salary: 2000,
             equity: "1",
-            companyHandle: "c2",
+            companyHandle: "c3",
           },
         ],
     });
@@ -158,7 +158,7 @@ describe("GET /jobs", function () {
               title: "j2",
               salary: 2000,
               equity: "1",
-              companyHandle: "c2",
+              companyHandle: "c3",
             },
             {
               id: expect.any(Number),
