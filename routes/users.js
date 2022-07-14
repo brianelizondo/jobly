@@ -5,13 +5,14 @@
 const jsonschema = require("jsonschema");
 
 const express = require("express");
+const generatorPassword = require("generate-password");
 const { ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
 const { BadRequestError } = require("../expressError");
 const User = require("../models/user");
 const { createToken } = require("../helpers/tokens");
 const userNewSchema = require("../schemas/userNew.json");
 const userUpdateSchema = require("../schemas/userUpdate.json");
-const jobApplicationNew = require("../schemas/jobApplicationNew.json")
+const jobApplicationNew = require("../schemas/jobApplicationNew.json");
 
 const router = express.Router();
 
@@ -29,13 +30,19 @@ const router = express.Router();
  **/
 router.post("/", ensureLoggedIn, async function (req, res, next) {
   try {
+    if(!req.body.password || req.body.password === ""){
+      req.body.password = generatorPassword.generate({
+        length: 10,
+        numbers: true
+      });
+    }
     const validator = jsonschema.validate(req.body, userNewSchema);
     if (!validator.valid) {
       const errs = validator.errors.map(e => e.stack);
       throw new BadRequestError(errs);
     }
 
-    const user = await User.register(req.body);
+    const user = await User.register({ ...req.body, isAdmin: false });
     const token = createToken(user);
     return res.status(201).json({ user, token });
   } catch (err) {
