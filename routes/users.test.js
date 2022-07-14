@@ -5,6 +5,7 @@ const request = require("supertest");
 const db = require("../db.js");
 const app = require("../app");
 const User = require("../models/user");
+const Job = require("../models/job");
 
 const {
   commonBeforeAll,
@@ -344,6 +345,50 @@ describe("PATCH /users/:username", () => {
     expect(isSuccessful).toBeTruthy();
   });
 });
+
+
+/************************************** POST /users/:username/jobs/:id */
+describe("POST /users/:username/jobs/:id", () => {
+  test("works for users", async function () {
+    const resJob = await Job.findAll();
+    const resp = await request(app)
+        .post(`/users/u1/jobs/${ resJob[0].id }`)
+        .set("authorization", `Bearer ${uAdminToken}`);
+    expect(resp.body).toEqual({ applied: resJob[0].id });
+  });
+
+  test("works for correct regular users", async function () {
+    const resJob = await Job.findAll();
+    const resp = await request(app)
+        .post(`/users/u1/jobs/${ resJob[0].id }`)
+        .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.body).toEqual({ applied: resJob[0].id });
+  });
+
+  test("bad request for regular users to patch another user info", async function () {
+    const resJob = await Job.findAll();
+    const resp = await request(app)
+        .post(`/users/u2/jobs/${ resJob[0].id }`)
+        .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toEqual(401);
+  });
+
+  test("not found if no such user", async function () {
+    const resJob = await Job.findAll();
+    const resp = await request(app)
+        .post(`/users/nope/jobs/${ resJob[0].id }`)
+        .set("authorization", `Bearer ${uAdminToken}`);
+    expect(resp.statusCode).toEqual(404);
+  });
+
+  test("bad request if invalid data", async function () {
+    const resp = await request(app)
+        .post(`/users/u1/jobs/ID`)
+        .set("authorization", `Bearer ${uAdminToken}`);
+    expect(resp.statusCode).toEqual(400);
+  });
+});
+
 
 /************************************** DELETE /users/:username */
 

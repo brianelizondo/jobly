@@ -11,6 +11,7 @@ const User = require("../models/user");
 const { createToken } = require("../helpers/tokens");
 const userNewSchema = require("../schemas/userNew.json");
 const userUpdateSchema = require("../schemas/userUpdate.json");
+const jobApplicationNew = require("../schemas/jobApplicationNew.json")
 
 const router = express.Router();
 
@@ -26,7 +27,6 @@ const router = express.Router();
  *
  * Authorization required: login
  **/
-
 router.post("/", ensureLoggedIn, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, userNewSchema);
@@ -50,7 +50,6 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
  *
  * Authorization required: login
  **/
-
 router.get("/", ensureLoggedIn, async function (req, res, next) {
   try {
     const users = await User.findAll();
@@ -65,9 +64,8 @@ router.get("/", ensureLoggedIn, async function (req, res, next) {
  *
  * Returns { username, firstName, lastName, isAdmin }
  *
- * Authorization required: login
+ * Authorization required: login and correct user
  **/
-
 router.get("/:username", ensureCorrectUser, async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);
@@ -79,15 +77,14 @@ router.get("/:username", ensureCorrectUser, async function (req, res, next) {
 
 
 /** PATCH /[username] { user } => { user }
- *
- * Data can include:
- *   { firstName, lastName, password, email }
- *
- * Returns { username, firstName, lastName, email, isAdmin }
- *
- * Authorization required: login
- **/
-
+*
+* Data can include:
+*   { firstName, lastName, password, email }
+*
+* Returns { username, firstName, lastName, email, isAdmin }
+*
+* Authorization required: login and correct user
+**/
 router.patch("/:username", ensureCorrectUser, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, userUpdateSchema);
@@ -104,11 +101,40 @@ router.patch("/:username", ensureCorrectUser, async function (req, res, next) {
 });
 
 
-/** DELETE /[username]  =>  { deleted: username }
- *
- * Authorization required: login
- **/
+/** POST /users/[username]/jobs/[id]  => { user, token }
+*
+* Adds applications to a job. 
+*   Only for admin users to add users applications or the user can apply by self.
+*
+* This returns JSON like:
+*  { applied: jobId }
+*
+* Authorization required: login and correct user
+**/
+ router.post("/:username/jobs/:id", ensureCorrectUser, async function (req, res, next) {
+  try {
+    const applicationData = {
+      username: req.params.username,
+      jobId: parseInt(req.params.id)
+    }
+    const validator = jsonschema.validate(applicationData, jobApplicationNew);
+    if (!validator.valid) {
+      const errs = validator.errors.map(e => e.stack);
+      throw new BadRequestError(errs);
+    }
 
+    const jobApp = await User.applyJob(applicationData.username, applicationData.jobId);
+    return res.json({ applied: jobApp.job_id });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+
+/** DELETE /[username]  =>  { deleted: username }
+*
+* Authorization required: login
+**/
 router.delete("/:username", ensureCorrectUser, async function (req, res, next) {
   try {
     await User.remove(req.params.username);
