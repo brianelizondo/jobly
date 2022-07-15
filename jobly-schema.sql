@@ -35,3 +35,16 @@ CREATE TABLE applications (
   state job_state DEFAULT NULL,
   PRIMARY KEY (username, job_id)
 );
+
+CREATE TABLE technologies (
+  id SERIAL PRIMARY KEY,
+  technology TEXT NOT NULL
+);
+
+CREATE TABLE jobs_technologies (
+  job_id INTEGER
+    REFERENCES jobs ON DELETE CASCADE,
+  technology_id INTEGER
+    REFERENCES technologies ON DELETE CASCADE,
+  PRIMARY KEY (job_id, technology_id)
+);
